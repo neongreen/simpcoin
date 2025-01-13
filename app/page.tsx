@@ -1,5 +1,6 @@
 'use client'
 
+import * as Comlink from 'comlink'
 import crypto from 'crypto'
 import { useEffect, useRef, useState } from 'react'
 
@@ -7,8 +8,10 @@ export default function Home() {
   const [text, setText] = useState('')
   const [highestDifficulty, setHighestDifficulty] = useState(0)
   const [searchTime, setSearchTime] = useState(0)
+  const [currentNumber, setCurrentNumber] = useState(0)
   const hash = crypto.createHash('sha256').update(text).digest('hex')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const workerRef = useRef<Comlink.Remote<any>>(null)
 
   const highlightLongestRun = (hash: string) => {
     let maxRunChar = ''
@@ -49,31 +52,28 @@ export default function Home() {
     }
   }, [text])
 
+  useEffect(() => {
+    const loadWorker = async () => {
+      workerRef.current = Comlink.wrap(new Worker(new URL('./worker.ts', import.meta.url)))
+    }
+    loadWorker()
+  }, [])
+
   const resetHighestDifficulty = () => {
     setHighestDifficulty(maxRunLength)
   }
 
-  const incrementText = () => {
-    const startTime = performance.now()
-    let newText = text
-    let newMaxRunLength = maxRunLength
-
-    while (newMaxRunLength <= maxRunLength) {
-      const match = newText.match(/( \d+)$/)
-      if (match) {
-        const number = parseInt(match[1].trim(), 10) + 1
-        newText = newText.replace(/ \d+$/, ` ${number}`)
-      } else {
-        newText += ' 1'
-      }
-
-      const newHash = crypto.createHash('sha256').update(newText).digest('hex')
-      newMaxRunLength = highlightLongestRun(newHash).maxRunLength
+  const incrementText = async () => {
+    if (!workerRef.current) {
+      console.error('Worker is not loaded yet.')
+      return
     }
-
+    const startTime = performance.now()
+    const result = await workerRef.current.incrementText(text, maxRunLength)
     const endTime = performance.now()
     setSearchTime((endTime - startTime) / 1000)
-    setText(newText)
+    setText(result.newText)
+    setCurrentNumber(0)
   }
 
   return (
@@ -116,6 +116,9 @@ export default function Home() {
           </button>
           <p className='mt-1 break-all text-[10px] sm:text-[12px]'>
             search time: {searchTime.toFixed(2)} s
+          </p>
+          <p className='mt-1 break-all text-[10px] sm:text-[12px]'>
+            current number: {currentNumber}
           </p>
         </div>
       </main>
