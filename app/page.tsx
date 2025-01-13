@@ -1,10 +1,11 @@
 'use client'
 
 import crypto from 'crypto'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
   const [text, setText] = useState('')
+  const [highestDifficulty, setHighestDifficulty] = useState(0)
   const hash = crypto.createHash('sha256').update(text).digest('hex')
 
   const highlightLongestRun = (hash: string) => {
@@ -33,11 +34,21 @@ export default function Home() {
 
   const { highlightedHash, maxRunLength } = highlightLongestRun(hash)
 
+  useEffect(() => {
+    if (maxRunLength > highestDifficulty) {
+      setHighestDifficulty(maxRunLength)
+    }
+  }, [maxRunLength, highestDifficulty])
+
+  const resetHighestDifficulty = () => {
+    setHighestDifficulty(maxRunLength)
+  }
+
   return (
     <div className='grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]'>
       <main className='flex flex-col gap-4 row-start-2 items-center sm:items-start w-full'>
-        <h1 className='text-4xl font-bold'>Simpcoin</h1>
-        <h2 className='text-xl -mt-4'>Mining Tool</h2>
+        <h1 className='text-4xl font-bold font-[family-name:var(--font-kode-mono)]'>Simpcoin</h1>
+        <h2 className='text-xl -mt-4 font-[family-name:var(--font-kode-mono)]'>Mining Tool</h2>
         <textarea
           className='w-full h-32 p-2 mt-4 border rounded font-[family-name:var(--font-kode-mono)] text-sm bg-gray-800 text-white'
           placeholder='Block goes here...'
@@ -52,6 +63,15 @@ export default function Home() {
         </p>
         <p className='mt-1 font-[family-name:var(--font-kode-mono)] w-full break-all text-xs'>
           Difficulty: {maxRunLength}
+          <br />
+          {'='.repeat(maxRunLength)}
+        </p>
+        <p className='mt-1 font-[family-name:var(--font-kode-mono)] w-full break-all text-xs'>
+          Highest seen: {highestDifficulty}
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          <a href='#' onClick={resetHighestDifficulty} className='italic text-red-400'>reset</a>
+          <br />
+          {'='.repeat(highestDifficulty)}
         </p>
       </main>
     </div>

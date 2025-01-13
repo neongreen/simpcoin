@@ -16,3 +16,7 @@ body {
 .highlight {
   background-color: rgba(255, 255, 0, 0.3);
 }
+
+textarea, p {
+  font-variant-ligatures: none;
+}
