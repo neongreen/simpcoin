@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 export default function Home() {
   const [text, setText] = useState('')
   const [highestDifficulty, setHighestDifficulty] = useState(0)
+  const [searchTime, setSearchTime] = useState(0)
   const hash = crypto.createHash('sha256').update(text).digest('hex')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -52,6 +53,29 @@ export default function Home() {
     setHighestDifficulty(maxRunLength)
   }
 
+  const incrementText = () => {
+    const startTime = performance.now()
+    let newText = text
+    let newMaxRunLength = maxRunLength
+
+    while (newMaxRunLength <= maxRunLength) {
+      const match = newText.match(/( \d+)$/)
+      if (match) {
+        const number = parseInt(match[1].trim(), 10) + 1
+        newText = newText.replace(/ \d+$/, ` ${number}`)
+      } else {
+        newText += ' 1'
+      }
+
+      const newHash = crypto.createHash('sha256').update(newText).digest('hex')
+      newMaxRunLength = highlightLongestRun(newHash).maxRunLength
+    }
+
+    const endTime = performance.now()
+    setSearchTime((endTime - startTime) / 1000)
+    setText(newText)
+  }
+
   return (
     <div className='grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-4 sm:gap-8 sm:p-20 font-[family-name:var(--font-kode-mono)]'>
       <main className='flex flex-col gap-4 row-start-2 items-center sm:items-start w-full'>
@@ -83,8 +107,19 @@ export default function Home() {
           <br />
           {'='.repeat(highestDifficulty)}
         </p>
+        <div>
+          <button
+            className='mt-4 p-2 bg-blue-500 text-white rounded'
+            onClick={incrementText}
+          >
+            more difficulty
+          </button>
+          <p className='mt-1 break-all text-[10px] sm:text-[12px]'>
+            search time: {searchTime.toFixed(2)} s
+          </p>
+        </div>
       </main>
-      <footer className='row-start-3 flex gap-8 flex-wrap items-center justify-center sm:justify-start w-full'>
+      <footer className='row-start-3 mt-16 flex gap-8 flex-wrap items-center justify-center sm:justify-start w-full'>
         <span>
           made by <span className='rainbow-text'>emily</span>
         </span>
