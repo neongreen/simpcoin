@@ -60,10 +60,10 @@ export default function Home() {
         <textarea
           ref={textareaRef}
           className='w-full max-w-[800px] p-2 mt-4 border rounded text-sm bg-gray-800 text-white'
-          placeholder='block goes here...'
+          placeholder='previous block...'
           value={text}
           onChange={(e) => setText(e.target.value)}
-          style={{ overflow: 'hidden' }}
+          style={{ overflow: 'hidden', minHeight: '15em' }}
         >
         </textarea>
         <p
