@@ -1,5 +1,5 @@
 {
-  "name": "simpcoin",
+  "name": "simpcoin-miner",
   "version": "0.1.0",
   "private": true,
   "scripts": {
