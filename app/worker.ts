@@ -1,9 +1,8 @@
 import * as Comlink from 'comlink'
 import crypto from 'crypto'
 
-// This function highlights the longest run of a single character in the hash
-function highlightLongestRun(hash: string) {
-  let maxRunChar = ''
+// This function counts the longest run of a single character in the hash
+function longestRun(hash: string): number {
   let maxRunLength = 0
   let currentChar = ''
   let currentLength = 0
@@ -17,13 +16,11 @@ function highlightLongestRun(hash: string) {
     }
 
     if (currentLength > maxRunLength) {
-      maxRunChar = currentChar
       maxRunLength = currentLength
     }
   }
 
-  const regex = new RegExp(`(${maxRunChar}{${maxRunLength}})`)
-  return { highlightedHash: hash.replace(regex, '<span class="highlight">$1</span>'), maxRunLength }
+  return maxRunLength
 }
 
 // Invariants:
@@ -49,7 +46,7 @@ async function startSearch(prefix: string, currentNum: number, currentDifficulty
     currentNumber++
     newText = `${prefix} ${currentNumber}`
     const newHash = crypto.createHash('sha256').update(newText).digest('hex')
-    newMaxRunLength = highlightLongestRun(newHash).maxRunLength
+    newMaxRunLength = longestRun(newHash)
 
     // Yield control sometimes to keep the worker responsive
     if (currentNumber % 10000 === 0) {
