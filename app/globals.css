@@ -10,13 +10,25 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-kode-mono); /* Use only the monospace font */
+  font-variant-ligatures: none;
 }
 
 .highlight {
   background-color: rgba(255, 255, 0, 0.3);
 }
 
-textarea, p {
-  font-variant-ligatures: none;
+.rainbow-text {
+  background: linear-gradient(
+    90deg,
+    #ff9999,
+    #ffcc99,
+    #ffff99,
+    #ccff99,
+    #99ccff,
+    #cc99ff,
+    #ff99cc
+  );
+  -webkit-background-clip: text;
+  color: transparent;
 }

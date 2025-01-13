@@ -1,11 +1,6 @@
 import type { Metadata } from 'next'
-import { Geist, Kode_Mono } from 'next/font/google'
+import { Kode_Mono } from 'next/font/google'
 import './globals.css'
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
 
 const kodeMono = Kode_Mono({
   variable: '--font-kode-mono',
@@ -25,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body
-        className={`${geistSans.variable} ${kodeMono.variable} antialiased`}
+        className={`${kodeMono.variable} antialiased`}
       >
         {children}
       </body>

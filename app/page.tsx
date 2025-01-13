@@ -1,12 +1,13 @@
 'use client'
 
 import crypto from 'crypto'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function Home() {
   const [text, setText] = useState('')
   const [highestDifficulty, setHighestDifficulty] = useState(0)
   const hash = crypto.createHash('sha256').update(text).digest('hex')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const highlightLongestRun = (hash: string) => {
     let maxRunChar = ''
@@ -40,40 +41,62 @@ export default function Home() {
     }
   }, [maxRunLength, highestDifficulty])
 
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+    }
+  }, [text])
+
   const resetHighestDifficulty = () => {
     setHighestDifficulty(maxRunLength)
   }
 
   return (
-    <div className='grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]'>
+    <div className='grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-4 sm:gap-8 sm:p-20 font-[family-name:var(--font-kode-mono)]'>
       <main className='flex flex-col gap-4 row-start-2 items-center sm:items-start w-full'>
-        <h1 className='text-4xl font-bold font-[family-name:var(--font-kode-mono)]'>Simpcoin</h1>
-        <h2 className='text-xl -mt-4 font-[family-name:var(--font-kode-mono)]'>Mining Tool</h2>
+        <h1 className='text-4xl font-bold'>simpcoin</h1>
+        <h2 className='text-xl -mt-4'>mining tool</h2>
         <textarea
-          className='w-full h-32 p-2 mt-4 border rounded font-[family-name:var(--font-kode-mono)] text-sm bg-gray-800 text-white'
-          placeholder='Block goes here...'
+          ref={textareaRef}
+          className='w-full max-w-[800px] p-2 mt-4 border rounded text-sm bg-gray-800 text-white'
+          placeholder='block goes here...'
           value={text}
           onChange={(e) => setText(e.target.value)}
+          style={{ overflow: 'hidden' }}
         >
         </textarea>
         <p
-          className='mt-2 font-[family-name:var(--font-kode-mono)] w-full break-all text-xs'
+          className='mt-0 mb-2 w-full break-all text-xs sm:text-sm font-bold'
           dangerouslySetInnerHTML={{ __html: highlightedHash }}
         >
         </p>
-        <p className='mt-1 font-[family-name:var(--font-kode-mono)] w-full break-all text-xs'>
-          Difficulty: {maxRunLength}
+        <p className='mt-1 w-full break-all text-xs sm:text-sm'>
+          difficulty: {maxRunLength}
           <br />
-          {'='.repeat(maxRunLength)}
+          {'+'.repeat(maxRunLength)}
         </p>
-        <p className='mt-1 font-[family-name:var(--font-kode-mono)] w-full break-all text-xs'>
-          Highest seen: {highestDifficulty}
+        <p className='mt-1 w-full break-all text-xs sm:text-sm'>
+          highest seen: {highestDifficulty}
           &nbsp;&nbsp;&nbsp;&nbsp;
           <a href='#' onClick={resetHighestDifficulty} className='italic text-red-400'>reset</a>
           <br />
           {'='.repeat(highestDifficulty)}
         </p>
       </main>
+      <footer className='row-start-3 flex gap-8 flex-wrap items-center justify-center sm:justify-start w-full'>
+        <span>
+          made by <span className='rainbow-text'>emily</span>
+        </span>
+        <a
+          className='italic flex items-center gap-2 hover:underline hover:underline-offset-4 underline underline-offset-4'
+          href='https://github.com/neongreen/simpcoin'
+          target='_blank'
+          rel='noopener noreferrer'
+        >
+          source
+        </a>
+      </footer>
     </div>
   )
 }
