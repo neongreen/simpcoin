@@ -1,0 +1,15 @@
+{
+  "editor.defaultFormatter": "dprint.dprint",
+  "[json]": { "editor.defaultFormatter": "dprint.dprint" },
+  "[typescriptreact]": { "editor.defaultFormatter": "dprint.dprint" },
+  "[jsonc]": { "editor.defaultFormatter": "dprint.dprint" },
+  "[typescript]": { "editor.defaultFormatter": "dprint.dprint" },
+  "[javascript]": { "editor.defaultFormatter": "dprint.dprint" },
+  "workbench.editor.customLabels.patterns": {
+    "**/app/**/layout.tsx": "./${dirname} [Layout]",
+    "**/app/**/page.tsx": "./${dirname} [Page]",
+    "**/app/**/route.ts": "./${dirname} [Route]",
+    "**/app/**/*": "./${dirname} [${filename}]"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib"
+}
