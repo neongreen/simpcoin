@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 'use client'
 
 import * as Comlink from 'comlink'
@@ -9,6 +11,7 @@ export default function Home() {
   const [highestDifficulty, setHighestDifficulty] = useState(0)
   const [searchTime, setSearchTime] = useState(0)
   const [currentNumber, setCurrentNumber] = useState(0)
+  const [isWorkerBusy, setIsWorkerBusy] = useState(false)
   const hash = crypto.createHash('sha256').update(text).digest('hex')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const workerRef = useRef<Comlink.Remote<any>>(null)
@@ -55,25 +58,50 @@ export default function Home() {
   useEffect(() => {
     const loadWorker = async () => {
       workerRef.current = Comlink.wrap(new Worker(new URL('./worker.ts', import.meta.url)))
+      console.log('Worker loaded')
     }
     loadWorker()
   }, [])
+
+  const startCheckingTimer = () => {
+    const interval = setInterval(async () => {
+      if (workerRef.current) {
+        const isRunning = await workerRef.current.getIsRunning()
+        setIsWorkerBusy(isRunning)
+        if (isRunning) {
+          const number = await workerRef.current.getCurrentNumber()
+          setCurrentNumber(number)
+        } else {
+          const searchTime = await workerRef.current.getSearchTime()
+          setSearchTime(searchTime)
+          const newText = await workerRef.current.getNewText()
+          setText(newText)
+          console.log('The worker is done')
+          clearInterval(interval)
+        }
+      }
+    }, 50)
+  }
 
   const resetHighestDifficulty = () => {
     setHighestDifficulty(maxRunLength)
   }
 
   const incrementText = async () => {
-    if (!workerRef.current) {
-      console.error('Worker is not loaded yet.')
+    if (!workerRef.current || isWorkerBusy) {
+      console.error('Worker is not loaded yet or is busy.')
       return
     }
-    const startTime = performance.now()
-    const result = await workerRef.current.incrementText(text, maxRunLength)
-    const endTime = performance.now()
-    setSearchTime((endTime - startTime) / 1000)
-    setText(result.newText)
-    setCurrentNumber(0)
+    console.log('Starting worker to increment text')
+    const match = text.match(/(.*) (\d+)$/)
+    let prefix = text
+    let currentNum = 0
+    if (match) {
+      prefix = match[1]
+      currentNum = parseInt(match[2], 10)
+    }
+    workerRef.current.startSearch(prefix, currentNum, maxRunLength)
+    startCheckingTimer()
   }
 
   return (
@@ -111,6 +139,7 @@ export default function Home() {
           <button
             className='mt-4 p-2 bg-blue-500 text-white rounded'
             onClick={incrementText}
+            disabled={isWorkerBusy}
           >
             more difficulty
           </button>
