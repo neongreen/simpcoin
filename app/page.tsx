@@ -14,8 +14,14 @@ export default function Home() {
   const [searchTime, setSearchTime] = useState(0)
   const [searchedNonce, setSearchedNonce] = useState(0)
   const [isWorkerBusy, setIsWorkerBusy] = useState(false)
-  const prefix = `${text}\n\n${message}${message ? ' ' : ''}`
-  const hash = crypto.createHash('sha256').update(`${prefix}${nonce}`).digest('hex')
+
+  // This is used for brute-forcing.
+  // Invariant: **if the nonce is non-empty**, prefix+nonce = block
+  const prefix = `${text}\n\n${message ? (message + ' ') : ''}`
+
+  // This is the final block calculation.
+  const block = nonce ? prefix + nonce : `${text}\n\n${message}`
+  const hash = crypto.createHash('sha256').update(block).digest('hex')
 
   const workerRef = useRef<Comlink.Remote<any>>(null)
 
