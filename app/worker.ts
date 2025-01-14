@@ -1,5 +1,5 @@
 import * as Comlink from 'comlink'
-import crypto from 'crypto'
+import { sha256 } from 'hash-wasm'
 
 // This function counts the longest run of a single character in the hash
 function longestRun(hash: string): number {
@@ -41,13 +41,12 @@ async function startSearch(prefix: string, currentNum: number, currentDifficulty
 
   while (newMaxRunLength <= currentDifficulty) {
     currentNumber++
-    // Sadly we can't precompute b/c streaming hashing doesn't work for some reason
     const newText = `${prefix} ${currentNumber}`
-    const newHash = crypto.createHash('sha256').update(newText).digest('hex')
+    const newHash = await sha256(newText)
     newMaxRunLength = longestRun(newHash)
 
     // Yield control sometimes to keep the worker responsive
-    if (currentNumber % 30000 === 0) {
+    if (currentNumber % 50000 === 0) {
       await new Promise((resolve) => setTimeout(resolve, 0))
     }
   }
