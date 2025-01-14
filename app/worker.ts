@@ -55,33 +55,33 @@ function longestRun(hash: Uint8Array): number {
 // - isRunning: true if the worker is currently processing, false otherwise
 // - startTime: the time when the current processing started
 // - endTime: the time when the current processing ended
-let currentNumber = 0
+let nonce = 0
 let isRunning = false
 let startTime = 0
 let endTime = 0
 
 // This function increments the text until a hash with a longer run is found
-async function startSearch(prefix: string, currentNum: number, currentDifficulty: number): Promise<void> {
+async function startSearch(prefix: string, startingNonce: number, currentDifficulty: number): Promise<void> {
   isRunning = true
   startTime = performance.now()
-  currentNumber = currentNum
+  nonce = startingNonce
   let runLength = currentDifficulty
 
   const hasher = await createSHA256()
   hasher.init()
-  hasher.update(prefix + ' ')
+  hasher.update(prefix)
   const state = hasher.save()
 
   const newHasher = await createSHA256()
 
   while (runLength <= currentDifficulty) {
-    currentNumber++
+    nonce++
     newHasher.load(state)
-    newHasher.update(`${currentNumber}`)
+    newHasher.update(`${nonce}`)
     runLength = longestRun(newHasher.digest('binary'))
 
     // Yield control sometimes to keep the worker responsive
-    if (currentNumber % 50000 === 0) {
+    if (nonce % 50000 === 0) {
       await new Promise((resolve) => setTimeout(resolve, 0))
     }
   }
@@ -91,8 +91,8 @@ async function startSearch(prefix: string, currentNum: number, currentDifficulty
 }
 
 // This function returns the current number being appended to the text
-function getCurrentNumber(): number {
-  return currentNumber
+function getCurrentNonce(): number {
+  return nonce
 }
 
 // This function returns whether the worker is currently processing
@@ -107,7 +107,7 @@ function getSearchTime(): number {
 
 const worker = {
   startSearch,
-  getCurrentNumber,
+  getCurrentNonce,
   getIsRunning,
   getSearchTime,
 }

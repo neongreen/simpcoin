@@ -8,22 +8,17 @@ import { useEffect, useRef, useState } from 'react'
 
 export default function Home() {
   const [text, setText] = useState('')
-  const [highestDifficulty, setHighestDifficulty] = useState(0)
+  const [message, setMessage] = useState('')
+  const [nonce, setNonce] = useState('')
   const [searchTime, setSearchTime] = useState(0)
-  const [currentNumber, setCurrentNumber] = useState(0)
+  const [searchedNonce, setSearchedNonce] = useState(0)
   const [isWorkerBusy, setIsWorkerBusy] = useState(false)
-  const hash = crypto.createHash('sha256').update(text).digest('hex')
+  const prefix = `${text}\n\n${message}${message ? ' ' : ''}`
+  const hash = crypto.createHash('sha256').update(`${prefix}${nonce}`).digest('hex')
+
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const workerRef = useRef<Comlink.Remote<any>>(null)
-
-  // For the search
-  const match = text.match(/(.*) (\d+)$/s)
-  let prefix = text
-  let currentNum = 0
-  if (match) {
-    prefix = match[1]
-    currentNum = parseInt(match[2], 10)
-  }
+  const messageRef = useRef<HTMLTextAreaElement>(null)
 
   const highlightLongestRun = (hash: string) => {
     let maxRunChar = ''
@@ -49,13 +44,14 @@ export default function Home() {
     return { highlightedHash: hash.replace(regex, '<span class="highlight">$1</span>'), maxRunLength }
   }
 
-  const { highlightedHash, maxRunLength } = highlightLongestRun(hash)
+  const { highlightedHash, maxRunLength: difficulty } = highlightLongestRun(hash)
+  const [highestDifficulty, setHighestDifficulty] = useState(difficulty)
 
   useEffect(() => {
-    if (maxRunLength > highestDifficulty) {
-      setHighestDifficulty(maxRunLength)
+    if (difficulty > highestDifficulty) {
+      setHighestDifficulty(difficulty)
     }
-  }, [maxRunLength, highestDifficulty])
+  }, [difficulty, highestDifficulty])
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -63,6 +59,13 @@ export default function Home() {
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
     }
   }, [text])
+
+  useEffect(() => {
+    if (messageRef.current) {
+      messageRef.current.style.height = 'auto'
+      messageRef.current.style.height = `${messageRef.current.scrollHeight}px`
+    }
+  }, [message])
 
   useEffect(() => {
     const loadWorker = async () => {
@@ -77,13 +80,13 @@ export default function Home() {
       if (workerRef.current) {
         const isRunning = await workerRef.current.getIsRunning()
         setIsWorkerBusy(isRunning)
-        const number = await workerRef.current.getCurrentNumber()
-        setCurrentNumber(number)
+        const currentNonce = await workerRef.current.getCurrentNonce()
+        setSearchedNonce(currentNonce)
         if (!isRunning) {
           const searchTime = await workerRef.current.getSearchTime()
           setSearchTime(searchTime)
-          setText(`${prefix} ${number}`)
-          setCurrentNumber(0) // Reset current number when search is done
+          setNonce(`${currentNonce}`)
+          setSearchedNonce(0) // Reset current number when search is done
           console.log('The worker is done')
           clearInterval(interval)
         }
@@ -92,7 +95,7 @@ export default function Home() {
   }
 
   const resetHighestDifficulty = () => {
-    setHighestDifficulty(maxRunLength)
+    setHighestDifficulty(difficulty)
   }
 
   const incrementText = async () => {
@@ -101,8 +104,8 @@ export default function Home() {
       return
     }
     console.log('Starting worker to increment text')
-    console.log('Starting search with', { prefix, currentNum, maxRunLength })
-    workerRef.current.startSearch(prefix, currentNum, maxRunLength)
+    console.log('Starting search with', { text, message, nonce, difficulty })
+    workerRef.current.startSearch(prefix, parseInt(nonce, 10) || 0, difficulty)
     startCheckingTimer()
   }
 
@@ -114,21 +117,39 @@ export default function Home() {
         <textarea
           ref={textareaRef}
           className='w-full max-w-[800px] p-2 mt-4 border rounded text-sm bg-gray-800 text-white'
-          placeholder='previous block...'
+          placeholder='previous block'
           value={text}
           onChange={(e) => setText(e.target.value)}
           style={{ overflow: 'hidden', minHeight: '15em' }}
         >
         </textarea>
+        <div className='w-full max-w-[800px] flex gap-4'>
+          <textarea
+            ref={messageRef}
+            className='flex-grow p-2 border rounded text-sm bg-gray-800 text-white'
+            placeholder='message'
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={1}
+            style={{ overflow: 'hidden', minHeight: '1em', height: 'auto', resize: 'none' }}
+          >
+          </textarea>
+          <input
+            className='w-[12ch] p-2 border rounded text-sm bg-gray-800 text-white self-start'
+            placeholder='nonce'
+            value={nonce}
+            onChange={(e) => setNonce(e.target.value)}
+          />
+        </div>
         <p
           className='mt-0 mb-2 w-full break-all text-xs sm:text-sm font-bold'
           dangerouslySetInnerHTML={{ __html: highlightedHash }}
         >
         </p>
         <p className='mt-1 w-full break-all text-xs sm:text-sm'>
-          difficulty: {maxRunLength}
+          difficulty: {difficulty}
           <br />
-          {'+'.repeat(maxRunLength)}
+          {'+'.repeat(difficulty)}
         </p>
         <p className='mt-1 w-full break-all text-xs sm:text-sm'>
           highest seen: {highestDifficulty}
@@ -148,8 +169,8 @@ export default function Home() {
           <p className='mt-1 break-all text-[10px] sm:text-[12px]'>
             search time: {searchTime.toFixed(2)} s
             <br />
-            {isWorkerBusy && currentNumber !== 0
-              ? <>current number: {currentNumber}</>
+            {isWorkerBusy && searchedNonce !== 0
+              ? <>current number: {searchedNonce}</>
               : <>&nbsp;</>}
           </p>
         </div>
