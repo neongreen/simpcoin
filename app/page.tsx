@@ -16,6 +16,15 @@ export default function Home() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const workerRef = useRef<Comlink.Remote<any>>(null)
 
+  // For the search
+  const match = text.match(/(.*) (\d+)$/s)
+  let prefix = text
+  let currentNum = 0
+  if (match) {
+    prefix = match[1]
+    currentNum = parseInt(match[2], 10)
+  }
+
   const highlightLongestRun = (hash: string) => {
     let maxRunChar = ''
     let maxRunLength = 0
@@ -68,14 +77,12 @@ export default function Home() {
       if (workerRef.current) {
         const isRunning = await workerRef.current.getIsRunning()
         setIsWorkerBusy(isRunning)
-        if (isRunning) {
-          const number = await workerRef.current.getCurrentNumber()
-          setCurrentNumber(number)
-        } else {
+        const number = await workerRef.current.getCurrentNumber()
+        setCurrentNumber(number)
+        if (!isRunning) {
           const searchTime = await workerRef.current.getSearchTime()
           setSearchTime(searchTime)
-          const newText = await workerRef.current.getNewText()
-          setText(newText)
+          setText(`${prefix} ${number}`)
           setCurrentNumber(0) // Reset current number when search is done
           console.log('The worker is done')
           clearInterval(interval)
@@ -94,13 +101,7 @@ export default function Home() {
       return
     }
     console.log('Starting worker to increment text')
-    const match = text.match(/(.*) (\d+)$/)
-    let prefix = text
-    let currentNum = 0
-    if (match) {
-      prefix = match[1]
-      currentNum = parseInt(match[2], 10)
-    }
+    console.log('Starting search with', { prefix, currentNum, maxRunLength })
     workerRef.current.startSearch(prefix, currentNum, maxRunLength)
     startCheckingTimer()
   }

@@ -31,20 +31,18 @@ let currentNumber = 0
 let isRunning = false
 let startTime = 0
 let endTime = 0
-let newText = ''
 
 // This function increments the text until a hash with a longer run is found
 async function startSearch(prefix: string, currentNum: number, currentDifficulty: number): Promise<void> {
   isRunning = true
   startTime = performance.now()
-  newText = prefix
   currentNumber = currentNum
   let newMaxRunLength = currentDifficulty
 
   while (newMaxRunLength <= currentDifficulty) {
     currentNumber++
     // Sadly we can't precompute b/c streaming hashing doesn't work for some reason
-    newText = `${prefix} ${currentNumber}`
+    const newText = `${prefix} ${currentNumber}`
     const newHash = crypto.createHash('sha256').update(newText).digest('hex')
     newMaxRunLength = longestRun(newHash)
 
@@ -73,16 +71,11 @@ function getSearchTime(): number {
   return (endTime - startTime) / 1000
 }
 
-function getNewText(): string {
-  return newText
-}
-
 const worker = {
   startSearch,
   getCurrentNumber,
   getIsRunning,
   getSearchTime,
-  getNewText,
 }
 
 Comlink.expose(worker)
