@@ -1,23 +1,51 @@
 import * as Comlink from 'comlink'
 import { createSHA256 } from 'hash-wasm'
 
-// This function counts the longest run of a single character in the hash
-function longestRun(hash: string): number {
-  let maxRunLength = 0
-  let currentChar = ''
-  let currentLength = 0
+// This function counts the longest run of a single hex character (nibble) in the hash
+function longestRun(hash: Uint8Array): number {
+  if (hash.length === 0) return 0
 
-  for (let i = 0; i < hash.length; i++) {
-    if (hash[i] === currentChar) {
+  let maxRunLength = 0
+  let currentLength = 1
+
+  // Process the first byte explicitly
+  let previousNibble = (hash[0] >> 4) & 0xF // high nibble of the first byte
+  const lowNibble = hash[0] & 0xF // low nibble of the first byte
+
+  if (lowNibble === previousNibble) {
+    currentLength++
+  } else {
+    currentLength = 1
+  }
+  previousNibble = lowNibble
+
+  // Process the remaining bytes
+  for (let i = 1; i < hash.length; i++) {
+    const highNibble = (hash[i] >> 4) & 0xF
+    if (highNibble === previousNibble) {
       currentLength++
     } else {
-      currentChar = hash[i]
+      if (currentLength > maxRunLength) {
+        maxRunLength = currentLength
+      }
       currentLength = 1
+      previousNibble = highNibble
     }
 
-    if (currentLength > maxRunLength) {
-      maxRunLength = currentLength
+    const lowNibble = hash[i] & 0xF
+    if (lowNibble === previousNibble) {
+      currentLength++
+    } else {
+      if (currentLength > maxRunLength) {
+        maxRunLength = currentLength
+      }
+      currentLength = 1
+      previousNibble = lowNibble
     }
+  }
+
+  if (currentLength > maxRunLength) {
+    maxRunLength = currentLength
   }
 
   return maxRunLength
@@ -37,7 +65,7 @@ async function startSearch(prefix: string, currentNum: number, currentDifficulty
   isRunning = true
   startTime = performance.now()
   currentNumber = currentNum
-  let newMaxRunLength = currentDifficulty
+  let runLength = currentDifficulty
 
   const hasher = await createSHA256()
   hasher.init()
@@ -46,12 +74,11 @@ async function startSearch(prefix: string, currentNum: number, currentDifficulty
 
   const newHasher = await createSHA256()
 
-  while (newMaxRunLength <= currentDifficulty) {
+  while (runLength <= currentDifficulty) {
     currentNumber++
     newHasher.load(state)
     newHasher.update(`${currentNumber}`)
-    const newHash = newHasher.digest('hex')
-    newMaxRunLength = longestRun(newHash)
+    runLength = longestRun(newHasher.digest('binary'))
 
     // Yield control sometimes to keep the worker responsive
     if (currentNumber % 50000 === 0) {
