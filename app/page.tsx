@@ -101,7 +101,7 @@ export default function Home() {
         <h2 className='text-xl -mt-4'>mining tool</h2>
         <TextareaAutosize
           className='w-full max-w-[800px] p-2 mt-4 border rounded text-sm bg-gray-800 text-white'
-          placeholder='previous block'
+          placeholder='previous block ("copy text" in discord)'
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={10}
@@ -110,7 +110,7 @@ export default function Home() {
         <div className='w-full max-w-[800px] flex gap-4'>
           <TextareaAutosize
             className='flex-grow p-2 border rounded text-sm bg-gray-800 text-white'
-            placeholder='message'
+            placeholder='message (optional)'
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={1}
