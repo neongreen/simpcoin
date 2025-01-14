@@ -5,6 +5,7 @@
 import * as Comlink from 'comlink'
 import crypto from 'crypto'
 import { useEffect, useRef, useState } from 'react'
+import TextareaAutosize from 'react-textarea-autosize'
 
 export default function Home() {
   const [text, setText] = useState('')
@@ -16,9 +17,7 @@ export default function Home() {
   const prefix = `${text}\n\n${message}${message ? ' ' : ''}`
   const hash = crypto.createHash('sha256').update(`${prefix}${nonce}`).digest('hex')
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const workerRef = useRef<Comlink.Remote<any>>(null)
-  const messageRef = useRef<HTMLTextAreaElement>(null)
 
   const highlightLongestRun = (hash: string) => {
     let maxRunChar = ''
@@ -52,20 +51,6 @@ export default function Home() {
       setHighestDifficulty(difficulty)
     }
   }, [difficulty, highestDifficulty])
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
-    }
-  }, [text])
-
-  useEffect(() => {
-    if (messageRef.current) {
-      messageRef.current.style.height = 'auto'
-      messageRef.current.style.height = `${messageRef.current.scrollHeight}px`
-    }
-  }, [message])
 
   useEffect(() => {
     const loadWorker = async () => {
@@ -114,26 +99,24 @@ export default function Home() {
       <main className='flex flex-col gap-4 row-start-2 items-center sm:items-start w-full'>
         <h1 className='text-4xl font-bold'>simpcoin</h1>
         <h2 className='text-xl -mt-4'>mining tool</h2>
-        <textarea
-          ref={textareaRef}
+        <TextareaAutosize
           className='w-full max-w-[800px] p-2 mt-4 border rounded text-sm bg-gray-800 text-white'
           placeholder='previous block'
           value={text}
           onChange={(e) => setText(e.target.value)}
-          style={{ overflow: 'hidden', minHeight: '15em' }}
-        >
-        </textarea>
+          rows={10}
+          minRows={10}
+        />
         <div className='w-full max-w-[800px] flex gap-4'>
-          <textarea
-            ref={messageRef}
+          <TextareaAutosize
             className='flex-grow p-2 border rounded text-sm bg-gray-800 text-white'
             placeholder='message'
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={1}
-            style={{ overflow: 'hidden', minHeight: '1em', height: 'auto', resize: 'none' }}
-          >
-          </textarea>
+            minRows={1}
+            style={{ resize: 'none' }}
+          />
           <input
             className='w-[12ch] p-2 border rounded text-sm bg-gray-800 text-white self-start'
             placeholder='nonce'
