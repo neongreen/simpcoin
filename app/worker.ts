@@ -23,7 +23,6 @@ function longestRun(hash: string): number {
   return maxRunLength
 }
 
-// Invariants:
 // - currentNumber: the current number being appended to the text
 // - isRunning: true if the worker is currently processing, false otherwise
 // - startTime: the time when the current processing started
@@ -44,12 +43,13 @@ async function startSearch(prefix: string, currentNum: number, currentDifficulty
 
   while (newMaxRunLength <= currentDifficulty) {
     currentNumber++
+    // Sadly we can't precompute b/c streaming hashing doesn't work for some reason
     newText = `${prefix} ${currentNumber}`
     const newHash = crypto.createHash('sha256').update(newText).digest('hex')
     newMaxRunLength = longestRun(newHash)
 
     // Yield control sometimes to keep the worker responsive
-    if (currentNumber % 10000 === 0) {
+    if (currentNumber % 30000 === 0) {
       await new Promise((resolve) => setTimeout(resolve, 0))
     }
   }

@@ -76,6 +76,7 @@ export default function Home() {
           setSearchTime(searchTime)
           const newText = await workerRef.current.getNewText()
           setText(newText)
+          setCurrentNumber(0) // Reset current number when search is done
           console.log('The worker is done')
           clearInterval(interval)
         }
@@ -145,9 +146,10 @@ export default function Home() {
           </button>
           <p className='mt-1 break-all text-[10px] sm:text-[12px]'>
             search time: {searchTime.toFixed(2)} s
-          </p>
-          <p className='mt-1 break-all text-[10px] sm:text-[12px]'>
-            current number: {currentNumber}
+            <br />
+            {isWorkerBusy && currentNumber !== 0
+              ? <>current number: {currentNumber}</>
+              : <>&nbsp;</>}
           </p>
         </div>
       </main>
